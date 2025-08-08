@@ -2,33 +2,47 @@ import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+import time
+
+USERNAME = "user"     # change to an existing DB username
+PASSWORD = "123"      # change to that user's password
 
 @pytest.fixture
 def driver():
     options = Options()
-    options.add_argument("--start-maximized")
+    options.add_argument("--window-size=1280,800")  # Set window size
     driver = webdriver.Chrome(options=options)
     yield driver
     driver.quit()
 
 def test_print_session_for_user(driver):
-    # 1. Open the browser and navigate to your MiniShop
-    driver.get("http://localhost/minishop/index.php")
+    # 1. Open login page
+    driver.get("http://localhost/miniishop/index.php")
 
-    # 2. (Optional) Log in as a user — only if your system requires it
-    driver.find_element(By.NAME, "username").send_keys("testuser")
-    driver.find_element(By.NAME, "password").send_keys("password123")
-    driver.find_element(By.NAME, "login").click()
+    # 2. Fill username and password fields
+    driver.find_element(By.NAME, "username").send_keys(USERNAME)
+    driver.find_element(By.NAME, "password").send_keys(PASSWORD)
 
-    # 3. Get and print session cookies
+    # 3. Submit form
+    driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
+
+    # 4. Wait for redirect
+    time.sleep(2)
+
+    # 5. Print all cookies
     cookies = driver.get_cookies()
-    print("\nSession Cookies:")
+    print("\n--- All Cookies ---")
     for cookie in cookies:
         print(f"{cookie['name']} = {cookie['value']}")
 
-    # 4. Optionally, access specific cookie like PHPSESSID
+    # 6. Print PHPSESSID specifically
     session_id = driver.get_cookie("PHPSESSID")
     if session_id:
         print(f"\nPHPSESSID: {session_id['value']}")
     else:
-        print("\nPHPSESSID not found — user might not be logged in.")
+        print("\nPHPSESSID not found — login might have failed.")
+
+    # 7. Close window and check session end (manually)
+    print("\nClosing browser window to test if session ends...")
+    time.sleep(2)
+
